@@ -1,0 +1,66 @@
+apply plugin: 'maven'
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+task androidJavadocs(type: Javadoc) {
+    options.encoding = "utf-8"
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+    classifier = 'javadoc'
+    from androidJavadocs.destinationDir
+}
+
+task androidSourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.srcDirs
+}
+
+artifacts {
+    archives androidSourcesJar
+    archives androidJavadocsJar
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+
+            def mavenRepositoryUrl = releaseMavenUrl
+
+            if(versionName.endsWith("-SNAPSHOT")) {
+                mavenRepositoryUrl = snapshotMavenUrl
+            }
+
+            repository(url: mavenRepositoryUrl) {
+                authentication(userName: properties.getProperty("NEXUS_USER"), password: properties.getProperty("NEXUS_PASSWORD"))
+            }
+
+            pom.project {
+                packaging 'aar'
+                name libraryName
+                version = versionName
+                artifactId = artifactId
+                groupId = publishGroupId
+                description libraryDescription
+
+                licenses {
+                    license {
+                        name licenseName
+                        url licenseUrl
+                    }
+                }
+
+                developers {
+                    developer {
+                        id developerId
+                        name developerName
+                        email developerEmail
+                    }
+                }
+            }
+        }
+    }
+}
