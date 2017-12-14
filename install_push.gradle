@@ -44,7 +44,13 @@ uploadArchives {
             }
 
             repository(url: mavenRepositoryUrl) {
-                authentication(userName: properties.getProperty("NEXUS_USER"), password: properties.getProperty("NEXUS_PASSWORD"))
+                String maven_user = properties.getProperty("NEXUS_USER");
+                String maven_pwd = properties.getProperty("NEXUS_PASSWORD");
+                if(maven_user == null || maven_pwd == null) {
+                    throw new RuntimeException("NEXUS_USER or NEXUS_PASSWORD is not defined in local.properties!")
+                }
+
+                authentication(userName: maven_user, password: maven_pwd)
             }
 
             pom.project {
